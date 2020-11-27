@@ -1,0 +1,57 @@
+from PyQt5 import QtCore, QtGui, QtWidgets
+
+
+class NumDialog(object):
+    def setupUi(self, Dialog):
+        Dialog.setObjectName("Dialog")
+        Dialog.resize(484, 382)
+        self.comboBoxColumn = QtWidgets.QComboBox(Dialog)
+        self.comboBoxColumn.setGeometry(QtCore.QRect(170, 20, 211, 31))
+        font = QtGui.QFont()
+        font.setPointSize(13)
+        self.comboBoxColumn.setFont(font)
+        self.comboBoxColumn.setObjectName("comboBoxColumn")
+        self.columnLabel = QtWidgets.QLabel(Dialog)
+        self.columnLabel.setGeometry(QtCore.QRect(40, 20, 101, 31))
+        font = QtGui.QFont()
+        font.setPointSize(13)
+        self.columnLabel.setFont(font)
+        self.columnLabel.setObjectName("columnLabel")
+        self.okButton = QtWidgets.QPushButton(Dialog)
+        self.okButton.setGeometry(QtCore.QRect(220, 320, 101, 41))
+        font = QtGui.QFont()
+        font.setPointSize(13)
+        self.okButton.setFont(font)
+        self.okButton.setObjectName("okButton")
+        self.cancelButton = QtWidgets.QPushButton(Dialog)
+        self.cancelButton.setGeometry(QtCore.QRect(340, 320, 111, 41))
+        font = QtGui.QFont()
+        font.setPointSize(13)
+        self.cancelButton.setFont(font)
+        self.cancelButton.setObjectName("cancelButton")
+        self.groupBoxOrder = QtWidgets.QGroupBox(Dialog)
+        self.groupBoxOrder.setGeometry(QtCore.QRect(30, 80, 231, 111))
+        font = QtGui.QFont()
+        font.setPointSize(13)
+        self.groupBoxOrder.setFont(font)
+        self.groupBoxOrder.setObjectName("groupBoxOrder")
+        self.radioButtonAlpha = QtWidgets.QRadioButton(self.groupBoxOrder)
+        self.radioButtonAlpha.setGeometry(QtCore.QRect(10, 30, 131, 21))
+        self.radioButtonAlpha.setObjectName("radioButtonAlpha")
+        self.radioButtonOccur = QtWidgets.QRadioButton(self.groupBoxOrder)
+        self.radioButtonOccur.setGeometry(QtCore.QRect(10, 70, 191, 31))
+        self.radioButtonOccur.setObjectName("radioButtonOccur")
+
+        self.retranslateUi(Dialog)
+        QtCore.QMetaObject.connectSlotsByName(Dialog)
+
+    def retranslateUi(self, Dialog):
+        _translate = QtCore.QCoreApplication.translate
+        Dialog.setWindowTitle(_translate("Dialog", "Dialog"))
+        self.columnLabel.setText(_translate("Dialog", "Kolumna"))
+        self.okButton.setText(_translate("Dialog", "OK"))
+        self.cancelButton.setText(_translate("Dialog", "Anuluj"))
+        self.groupBoxOrder.setTitle(_translate("Dialog", "Kolejność"))
+        self.radioButtonAlpha.setText(_translate("Dialog", "Alfabetyczna"))
+        self.radioButtonOccur.setText(_translate("Dialog", "Według wystąpienia"))
+
