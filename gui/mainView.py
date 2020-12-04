@@ -17,6 +17,7 @@ from gui.Histogram import Histogram
 from metrics.Metrics import Metrics
 from gui.AddObject import AddObject
 from gui.ClassifyDialog import ClassifyDialog
+from operation.Split import Split
 
 class Ui_MainWindow(object):
 
@@ -210,27 +211,29 @@ class Ui_MainWindow(object):
         self.ui_classify.okButton.clicked.connect(lambda: self.classify())
 
     def classify(self):
-        metrics: Metrics = Metrics(len(self.data_frame.df.index), self.data_frame.df)
-        if self.ui_classify.euklidianRadio.isChecked():
-            if self.ui_classify.checkBoxNormalize.isChecked():
-                metrics.classify_euclidean_normalize()
-            else:
-                metrics.classify_euclidean()
-        elif self.ui_classify.manhattanRadio.isChecked():
-            if self.ui_classify.checkBoxNormalize.isChecked():
-                metrics.classify_manhattan_normalize()
-            else:
-                metrics.classify_manhattan()
-        elif self.ui_classify.chebyshevRadio.isChecked():
-            if self.ui_classify.checkBoxNormalize.isChecked():
-                metrics.classify_chebyshev_normalize()
-            else:
-                metrics.classify_chebyshev()
-        elif self.ui_classify.mahalanobisRadio.isChecked():
-            if self.ui_classify.checkBoxNormalize.isChecked():
-                metrics.classify_mahalanobis_normalize()
-            else:
-                metrics.classify_mahalanobis()
+        split: Split = Split(self.data_frame.df)
+        split.split_data()
+        # metrics: Metrics = Metrics(len(self.data_frame.df.index), self.data_frame.df)
+        # if self.ui_classify.euklidianRadio.isChecked():
+        #     if self.ui_classify.checkBoxNormalize.isChecked():
+        #         metrics.classify_euclidean_normalize()
+        #     else:
+        #         metrics.classify_euclidean()
+        # elif self.ui_classify.manhattanRadio.isChecked():
+        #     if self.ui_classify.checkBoxNormalize.isChecked():
+        #         metrics.classify_manhattan_normalize()
+        #     else:
+        #         metrics.classify_manhattan()
+        # elif self.ui_classify.chebyshevRadio.isChecked():
+        #     if self.ui_classify.checkBoxNormalize.isChecked():
+        #         metrics.classify_chebyshev_normalize()
+        #     else:
+        #         metrics.classify_chebyshev()
+        # elif self.ui_classify.mahalanobisRadio.isChecked():
+        #     if self.ui_classify.checkBoxNormalize.isChecked():
+        #         metrics.classify_mahalanobis_normalize()
+        #     else:
+        #         metrics.classify_mahalanobis()
 
         self.close_classify_dialog()
 
