@@ -18,6 +18,7 @@ from metrics.Metrics import Metrics
 from gui.AddObject import AddObject
 from gui.ClassifyDialog import ClassifyDialog
 from operation.Split import Split
+from gui.Vectorize import Vectorize_Dialog
 
 class Ui_MainWindow(object):
 
@@ -33,7 +34,7 @@ class Ui_MainWindow(object):
         self.tableView.setObjectName("tableView")
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 800, 21))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 965, 21))
         self.menubar.setObjectName("menubar")
         self.menuFile = QtWidgets.QMenu(self.menubar)
         self.menuFile.setObjectName("menuFile")
@@ -43,6 +44,8 @@ class Ui_MainWindow(object):
         self.menuWyswietl.setObjectName("menuWyswietl")
         self.menuWykresy = QtWidgets.QMenu(self.menubar)
         self.menuWykresy.setObjectName("menuWykresy")
+        self.menuDane = QtWidgets.QMenu(self.menubar)
+        self.menuDane.setObjectName("menuDane")
         MainWindow.setMenuBar(self.menubar)
         self.statusbar = QtWidgets.QStatusBar(MainWindow)
         self.statusbar.setObjectName("statusbar")
@@ -69,6 +72,8 @@ class Ui_MainWindow(object):
         self.actionAddObject.setObjectName("actionAddObject")
         self.actionClassify = QtWidgets.QAction(MainWindow)
         self.actionClassify.setObjectName("actionClassify")
+        self.actionVectorize = QtWidgets.QAction(MainWindow)
+        self.actionVectorize.setObjectName("actionVectorize")
         self.menuFile.addAction(self.actionLoad_data)
         self.menuFile.addAction(self.actionAddObject)
         self.menuFile.addAction(self.actionClassify)
@@ -80,10 +85,12 @@ class Ui_MainWindow(object):
         self.menuWykresy.addAction(self.actionHistogram)
         self.menuWykresy.addAction(self.action2D)
         self.menuWykresy.addAction(self.action3D)
+        self.menuDane.addAction(self.actionVectorize)
         self.menubar.addAction(self.menuFile.menuAction())
         self.menubar.addAction(self.menuEdit.menuAction())
         self.menubar.addAction(self.menuWyswietl.menuAction())
         self.menubar.addAction(self.menuWykresy.menuAction())
+        self.menubar.addAction(self.menuDane.menuAction())
 
         self.actionLoad_data.triggered.connect(lambda: self.openDialogLoad())
         self.actionChangeValOnNUmber.triggered.connect(lambda: self.openDialogNum())
@@ -96,6 +103,7 @@ class Ui_MainWindow(object):
         self.action3D.triggered.connect(lambda: self.open3d_dialog())
         self.actionAddObject.triggered.connect(lambda: self.newobject_dialog())
         self.actionClassify.triggered.connect(lambda: self.classifyDialog())
+        self.actionVectorize.triggered.connect(lambda: self.vectorize())
 
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
@@ -107,6 +115,7 @@ class Ui_MainWindow(object):
         self.menuEdit.setTitle(_translate("MainWindow", "Edycja"))
         self.menuWyswietl.setTitle(_translate("MainWindow", "Wyświetl"))
         self.menuWykresy.setTitle(_translate("MainWindow", "Wykresy"))
+        self.menuDane.setTitle(_translate("MainWindow", "Dane"))
         self.actionLoad_data.setText(_translate("MainWindow", "Wczytaj dane"))
         self.actionChangeValOnNUmber.setText(_translate("MainWindow", "Zmień na dane numeryczne"))
         self.actionDiscretize.setText(_translate("MainWindow", "Dyskretyzacja"))
@@ -118,6 +127,7 @@ class Ui_MainWindow(object):
         self.action3D.setText(_translate("MainWindow", "Wykres 3D"))
         self.actionAddObject.setText(_translate("MainWindow", "Dodaj obiekt"))
         self.actionClassify.setText(_translate("MainWindow", "Klasyfikacja"))
+        self.actionVectorize.setText(_translate("MainWindow", "Wektoryzacja"))
 
         
 
@@ -210,9 +220,25 @@ class Ui_MainWindow(object):
         self.classify_dialog.show()
         self.ui_classify.okButton.clicked.connect(lambda: self.classify())
 
+    def vectorize(self):
+        self.split.split_data()
+        self.split.create_vectorized_df()
+        self.vectorizeDialog()
+
+    def vectorizeDialog(self):
+        self.vectorize_dialog = QtWidgets.QDialog()
+        self.ui_vectorize = Vectorize_Dialog()
+        self.ui_vectorize.setupUi(self.vectorize_dialog)
+        self.vectorize_dialog.show()
+        self.ui_vectorize.addButton.clicked.connecr(lambda: self.classify_new_vectorize())
+
+    def classify_new_vectorize(self):
+        values = self.ui_vectorize.newValues.text()
+
     def classify(self):
         split: Split = Split(self.data_frame.df)
         split.split_data()
+        split.create_vectorized_df()
         # metrics: Metrics = Metrics(len(self.data_frame.df.index), self.data_frame.df)
         # if self.ui_classify.euklidianRadio.isChecked():
         #     if self.ui_classify.checkBoxNormalize.isChecked():
@@ -344,7 +370,7 @@ class Ui_MainWindow(object):
         sets_number = self.ui_disc.lineSetNumber.text()
         self.data_frame.discretize(col, sets_number)
         self.setup_table(self.data_frame.df)
-        self.setup_table(self.data_frame.df)
+        #self.setup_table(self.data_frame.df)
         self.close_discretize_dialog()
 
     def normalize(self):
@@ -375,6 +401,7 @@ class Ui_MainWindow(object):
         else:
             self.data_frame.df = file_loader.loadFile_and_add_headers(file_path, separator)
         self.setup_table(self.data_frame.df)
+        self.setup_split()
         print(self.data_frame.df.columns)
         print(self.data_frame.df.dtypes)
         self.close_file_dialog()
@@ -415,6 +442,9 @@ class Ui_MainWindow(object):
     def setup_table(self, df):
         self.pandas_model: PandasModel = PandasModel(df)
         self.tableView.setModel(self.pandas_model)
+
+    def setup_split(self):
+        self.split = Split(self.data_frame.df)
 
 if __name__ == "__main__":
     import sys
