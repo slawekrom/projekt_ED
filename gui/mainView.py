@@ -74,6 +74,8 @@ class Ui_MainWindow(object):
         self.actionClassify.setObjectName("actionClassify")
         self.actionVectorize = QtWidgets.QAction(MainWindow)
         self.actionVectorize.setObjectName("actionVectorize")
+        self.actionShowVectorize = QtWidgets.QAction(MainWindow)
+        self.actionShowVectorize.setObjectName("actionShowVectorize")
         self.menuFile.addAction(self.actionLoad_data)
         self.menuFile.addAction(self.actionAddObject)
         self.menuFile.addAction(self.actionClassify)
@@ -86,6 +88,7 @@ class Ui_MainWindow(object):
         self.menuWykresy.addAction(self.action2D)
         self.menuWykresy.addAction(self.action3D)
         self.menuDane.addAction(self.actionVectorize)
+        self.menuDane.addAction(self.actionShowVectorize)
         self.menubar.addAction(self.menuFile.menuAction())
         self.menubar.addAction(self.menuEdit.menuAction())
         self.menubar.addAction(self.menuWyswietl.menuAction())
@@ -104,6 +107,7 @@ class Ui_MainWindow(object):
         self.actionAddObject.triggered.connect(lambda: self.newobject_dialog())
         self.actionClassify.triggered.connect(lambda: self.classifyDialog())
         self.actionVectorize.triggered.connect(lambda: self.vectorize())
+        self.actionShowVectorize.triggered.connect(lambda: self.vectorizeDialog())
 
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
@@ -128,6 +132,7 @@ class Ui_MainWindow(object):
         self.actionAddObject.setText(_translate("MainWindow", "Dodaj obiekt"))
         self.actionClassify.setText(_translate("MainWindow", "Klasyfikacja"))
         self.actionVectorize.setText(_translate("MainWindow", "Wektoryzacja"))
+        self.actionShowVectorize.setText(_translate("MainWindow", "Wynik wektoryzacji"))
 
         
 
@@ -229,11 +234,19 @@ class Ui_MainWindow(object):
         self.vectorize_dialog = QtWidgets.QDialog()
         self.ui_vectorize = Vectorize_Dialog()
         self.ui_vectorize.setupUi(self.vectorize_dialog)
+        model: PandasModel = PandasModel(self.split.vectorized_df)
+        self.ui_vectorize.tableView.setModel(model)
         self.vectorize_dialog.show()
-        self.ui_vectorize.addButton.clicked.connecr(lambda: self.classify_new_vectorize())
+        self.ui_vectorize.addButton.clicked.connect(lambda: self.classify_new_vectorize())
+        self.ui_vectorize.saveButton.clicked.connect(lambda: self.save_to_file())
+
+    def save_to_file(self):
+        FileLoader.save_to_file(self.split.vectorized_df, self.ui_vectorize.filenameLabel.text())
 
     def classify_new_vectorize(self):
         values = self.ui_vectorize.newValues.text()
+        new_object_class = self.split.classify_new(values)
+        self.ui_vectorize.newObject_label.setText(new_object_class)
 
     def classify(self):
         split: Split = Split(self.data_frame.df)

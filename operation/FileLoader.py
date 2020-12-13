@@ -14,3 +14,7 @@ class FileLoader:
             headers.append('column' + str(i+1))
         df.columns = headers
         return df
+
+    @staticmethod
+    def save_to_file(df, filename):
+        df.to_csv(str(filename + '.csv'))

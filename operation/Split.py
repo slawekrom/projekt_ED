@@ -34,11 +34,11 @@ class Split:
                             column_values[i + 1] - column_values[i]) / 2  # punkt podziału w środku między punktami
                     splited_df = tmp_df[
                         tmp_df[columns[column]] < split_point]  # zbiór podzielony względem punktu podziału
-                    unique_classes = splited_df[splited_df.columns[-1]].nunique()
+                    unique_classes = splited_df[class_column].nunique()
 
                     if unique_classes == 1:
                         split_info: SplitInfo = SplitInfo(split_point=split_point, column=columns[column],
-                                                          count=len(splited_df.index), lower=True)
+                                                          count=len(splited_df.index), lower=True, o_class=splited_df.iloc[0][class_column])
                         splits.append(split_info)
                     else:
                         break
@@ -49,11 +49,11 @@ class Split:
                             column_values[i - 1] - column_values[i]) / 2  # punkt podziału w środku między punktami
                     splited_df = tmp_df[
                         tmp_df[columns[column]] > split_point]  # zbiór podzielony względem punktu podziału
-                    unique_classes = splited_df[splited_df.columns[-1]].nunique()
+                    unique_classes = splited_df[class_column].nunique()
 
                     if unique_classes == 1:
                         split_info: SplitInfo = SplitInfo(split_point=split_point, column=columns[column],
-                                                          count=len(splited_df.index), lower=False)
+                                                          count=len(splited_df.index), lower=False, o_class=splited_df.iloc[0][class_column])
                         splits.append(split_info)
                     else:
                         break
@@ -100,31 +100,30 @@ class Split:
         self.vectorized_df = vectorized_df
         return vectorized_df
 
-    def classyfy_new(self, values):
+    def classify_new(self, values):
         values_array = np.array(values.split(" ")).astype(np.float)
-        # class_column = self.vectorized_df.columns[-1]
-        # size = len(self.vectorized_df.columns) -1
-        # columns = []
-        # columns = self.vectorized_df.columns[0: size]
-        attributes_dict = dict()
+        new_object_class = None
         columns = []
-        columns = self.df.columns
+        columns = self.df.columns[0: self.size]
+        columns_dict = dict()
+        index = 0
+        for col in columns:
+            columns_dict.update({col: index})
+            index+=1
+
         for i in range(len(values_array)):
-            attributes_dict[columns[i]] = values_array[i]
+            split: Split = self.applied_splits[i]
+            new_object_value = values_array[columns_dict.get(split.column)]
+            if split.lower and new_object_value < split.split_point:
+                new_object_class = split.objects_class
+                break
+            elif not split.lowwer and new_object_value > split.split_point:
+                new_object_class = split.objects_class
+                break
 
-        vector = []
-        for i in range(len(self.applied_splits)):
-            split = self.applied_splits[i]
-            if split.lower:
-                if attributes_dict.get(split.column) < split.split_point:
-                    vector.append(1)
-                else:
-                    vector.append(0)
+        return new_object_class
 
-            elif attributes_dict.get(split.column) > split.split_point:
-                vector.append(1)
-            else:
-                vector.append(0)
+
 
 
     def clean_vectors(self):
