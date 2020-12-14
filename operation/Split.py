@@ -1,3 +1,5 @@
+from collections import Counter
+
 from operation.SplitInfo import SplitInfo
 import pandas as pd
 import numpy as np
@@ -60,16 +62,74 @@ class Split:
 
             splits.sort(reverse=True, key=lambda x: x.count)
             # delete splited rows
-            best_split = splits[0]
-            self.values_vector.append(best_split.split_point)
-            self.applied_splits.append(best_split)
-            vector_size += 1
-            print('Vector size: ' + str(vector_size) + ' deleted points count: ' + str(best_split.count))
-            if best_split.lower:
-                new_df = new_df[new_df[best_split.column] > best_split.split_point]
+            if len(splits) > 0:
+                best_split = splits[0]
+                self.values_vector.append(best_split.split_point)
+                self.applied_splits.append(best_split)
+                vector_size += 1
+                print('Vector size: ' + str(vector_size) + ' deleted points count: ' + str(best_split.count))
+                if best_split.lower:
+                    new_df = new_df[new_df[best_split.column] > best_split.split_point]
+                else:
+                    new_df = new_df[new_df[best_split.column] < best_split.split_point]
+            # była blokazda XOR
             else:
-                new_df = new_df[new_df[best_split.column] < best_split.split_point]
+                splits = []
+                for column in range(size):  # petla po columnach -atrybutach
+                    column_values = new_df[columns[column]].unique().tolist()
+                    column_values.sort()
+                    tmp_df = new_df.filter([columns[column], new_df.columns[-1]],
+                                           axis=1)  # zbiór danych z badaną kolumną i kolumną decyzyjną
+                    split_info = None
+                    for i in range(len(column_values) - 1):  # petla po wartosciach atrybutu od dołu
 
+                        split_point = column_values[i] + (
+                                column_values[i + 1] - column_values[i]) / 2  # punkt podziału w środku między punktami
+                        splited_df = tmp_df[
+                            tmp_df[columns[column]] < split_point]  # zbiór podzielony względem punktu podziału
+                        counter = Counter(splited_df[class_column])
+
+                        if len(counter.keys()) == 2 and counter.most_common(2)[1][1] == 1:
+                            split_info: SplitInfo = SplitInfo(split_point=split_point, column=columns[column],
+                                                              count=len(splited_df.index), lower=True,
+                                                              o_class=counter.most_common(1)[0][0])
+                        elif split_info is not None:
+                            splits.append(split_info)
+                            break
+                        else:
+                            break
+                    split_info = None
+                    for i in range(len(column_values) - 1, 0, -1):  # petla po wartosciach atrybutu od góry
+
+                        split_point = column_values[i] + (
+                                column_values[i - 1] - column_values[i]) / 2  # punkt podziału w środku między punktami
+                        splited_df = tmp_df[
+                            tmp_df[columns[column]] > split_point]  # zbiór podzielony względem punktu podziału
+                        counter = Counter(splited_df[class_column])
+
+                        if len(counter.keys()) == 2 and counter.most_common(2)[1][1] == 1:
+                            split_info: SplitInfo = SplitInfo(split_point=split_point, column=columns[column],
+                                                              count=len(splited_df.index), lower=False,
+                                                              o_class=counter.most_common(1)[0][0])
+                        elif split_info is not None:
+                            splits.append(split_info)
+                            break
+                        else:
+                            break
+
+                if len(splits) > 0:
+                    splits.sort(reverse=True, key=lambda x: x.count)
+                    best_split = splits[0]
+                    self.values_vector.append(best_split.split_point)
+                    self.applied_splits.append(best_split)
+                    vector_size += 1
+                    print('Vector size: ' + str(vector_size) + ' deleted points count: ' + str(best_split.count))
+                    if best_split.lower:
+                        new_df = new_df[new_df[best_split.column] > best_split.split_point]
+                    else:
+                        new_df = new_df[new_df[best_split.column] < best_split.split_point]
+                else: # przypadek gdy zostały takie same punkty ale należące do różnych klas - zakończyć algorytm
+                    new_df.drop(new_df.index, inplace=True)  # drop df  - nie trzeba dalej dzielić
             print(len(new_df))
 
     def create_vectorized_df(self):
