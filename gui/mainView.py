@@ -7,13 +7,13 @@ from gui.ChangeRangeDialog import ChangeRangeDialog
 from gui.SubsetDialog import SubsetDialog
 from gui.Plot2DDialog import Plot2DDialog
 from gui.Plot2D import Plot2D
-from gui.Plot3D import Plot3D
-from gui.HistogramDialog import HistogramDialog
-from gui.Plot3DDialog import Plot3DDialog
+# from gui.Plot3D import Plot3D
+# from gui.HistogramDialog import HistogramDialog
+# from gui.Plot3DDialog import Plot3DDialog
 from operation.FileLoader import FileLoader
 from data.PandasModel import PandasModel
 from data.DataFrame import DataFrame
-from gui.Histogram import Histogram
+# from gui.Histogram import Histogram
 from metrics.Metrics import Metrics
 from gui.AddObject import AddObject
 from gui.ClassifyDialog import ClassifyDialog
@@ -101,9 +101,9 @@ class Ui_MainWindow(object):
         self.actionNorm.triggered.connect(lambda: self.openNormDialog())
         self.actionChangeRange.triggered.connect(lambda: self.open_change_range_dialog())
         self.actionSubset.triggered.connect(lambda: self.open_subset_dialog())
-        self.actionHistogram.triggered.connect(lambda: self.open_hist_dialog())
-        self.action2D.triggered.connect(lambda: self.open2d_dialog())
-        self.action3D.triggered.connect(lambda: self.open3d_dialog())
+        # self.actionHistogram.triggered.connect(lambda: self.open_hist_dialog())
+        # self.action2D.triggered.connect(lambda: self.open2d_dialog())
+        # self.action3D.triggered.connect(lambda: self.open3d_dialog())
         self.actionAddObject.triggered.connect(lambda: self.newobject_dialog())
         self.actionClassify.triggered.connect(lambda: self.classifyDialog())
         self.actionVectorize.triggered.connect(lambda: self.vectorize())
@@ -192,16 +192,16 @@ class Ui_MainWindow(object):
         self.plot2d_dialog.show()
         self.ui_plot2d.okButton.clicked.connect(lambda: self.draw_plot_2d())
 
-    def open3d_dialog(self):
-        self.plot3d_dialog = QtWidgets.QDialog()
-        self.ui_plot3d = Plot3DDialog()
-        self.ui_plot3d.setupUi(self.plot3d_dialog)
-        self.ui_plot3d.comboBoxColumnX.addItems(self.data_frame.df.columns)
-        self.ui_plot3d.comboBoxColumnY.addItems(self.data_frame.df.columns)
-        self.ui_plot3d.comboBoxColumnZ.addItems(self.data_frame.df.columns)
-        self.ui_plot3d.comboBoxClass.addItems(self.data_frame.df.columns)
-        self.plot3d_dialog.show()
-        self.ui_plot3d.okButton.clicked.connect(lambda: self.draw_plot_3d())
+    # def open3d_dialog(self):
+    #     self.plot3d_dialog = QtWidgets.QDialog()
+    #     self.ui_plot3d = Plot3DDialog()
+    #     self.ui_plot3d.setupUi(self.plot3d_dialog)
+    #     self.ui_plot3d.comboBoxColumnX.addItems(self.data_frame.df.columns)
+    #     self.ui_plot3d.comboBoxColumnY.addItems(self.data_frame.df.columns)
+    #     self.ui_plot3d.comboBoxColumnZ.addItems(self.data_frame.df.columns)
+    #     self.ui_plot3d.comboBoxClass.addItems(self.data_frame.df.columns)
+    #     self.plot3d_dialog.show()
+    #     self.ui_plot3d.okButton.clicked.connect(lambda: self.draw_plot_3d())
 
     def newobject_dialog(self):
         self.new_object_dialog = QtWidgets.QDialog()
@@ -239,6 +239,7 @@ class Ui_MainWindow(object):
         self.vectorize_dialog.show()
         self.ui_vectorize.addButton.clicked.connect(lambda: self.classify_new_vectorize())
         self.ui_vectorize.saveButton.clicked.connect(lambda: self.save_to_file())
+        self.ui_vectorize.drawButton.clicked.connect(lambda: self.open2d_dialog())
 
     def save_to_file(self):
         FileLoader.save_to_file(self.split.vectorized_df, self.ui_vectorize.filenameLabel.text())
@@ -293,15 +294,15 @@ class Ui_MainWindow(object):
         self.close_add_new_object_dialog()
 
 
-    def show_hist(self):
-        column = self.ui_hist.comboBoxColumn.currentText()
-        if self.ui_hist.checkBoxSets.isChecked():
-            number_of_bins = int(self.ui_hist.lineSets.text())
-        else:
-            number_of_bins = self.data_frame.df[column].nunique()
-        self.histogram_plot: Histogram = Histogram(self.data_frame.df, column, number_of_bins)
-        self.histogram_plot.show()
-        self.close_hist_dialog()
+    # def show_hist(self):
+    #     column = self.ui_hist.comboBoxColumn.currentText()
+    #     if self.ui_hist.checkBoxSets.isChecked():
+    #         number_of_bins = int(self.ui_hist.lineSets.text())
+    #     else:
+    #         number_of_bins = self.data_frame.df[column].nunique()
+    #     self.histogram_plot: Histogram = Histogram(self.data_frame.df, column, number_of_bins)
+    #     self.histogram_plot.show()
+    #     self.close_hist_dialog()
 
     def draw_plot_2d(self):
         x = self.ui_plot2d.comboBoxColumnX.currentText()
@@ -311,30 +312,30 @@ class Ui_MainWindow(object):
             class_column = self.ui_plot2d.comboBoxClass.currentText()
         else:
             class_column = None
-        self.plot2d: Plot2D = Plot2D(self.data_frame.df, x, y, class_column)
+        self.plot2d: Plot2D = Plot2D(self.data_frame.df, x, y, class_column, self.split.applied_splits)
         self.plot2d.show()
         self.close_plot2d_dialog()
 
-    def draw_plot_3d(self):
-        x = self.ui_plot3d.comboBoxColumnX.currentText()
-        y = self.ui_plot3d.comboBoxColumnY.currentText()
-        z = self.ui_plot3d.comboBoxColumnZ.currentText()
-        is_colors = self.ui_plot3d.checkBoxColors.isChecked()
-        if is_colors:
-            class_column = self.ui_plot3d.comboBoxClass.currentText()
-        else:
-            class_column = None
-        self.plot3d: Plot3D = Plot3D(self.data_frame.df, x, y, z, class_column)
-        self.plot3d.show()
-        self.close_plot3d_dialog()
-
-    def open_hist_dialog(self):
-        self.hist_dialog = QtWidgets.QDialog()
-        self.ui_hist = HistogramDialog()
-        self.ui_hist.setupUi(self.hist_dialog)
-        self.ui_hist.comboBoxColumn.addItems(self.data_frame.df.columns)
-        self.hist_dialog.show()
-        self.ui_hist.okButton.clicked.connect(lambda: self.show_hist())
+    # def draw_plot_3d(self):
+    #     x = self.ui_plot3d.comboBoxColumnX.currentText()
+    #     y = self.ui_plot3d.comboBoxColumnY.currentText()
+    #     z = self.ui_plot3d.comboBoxColumnZ.currentText()
+    #     is_colors = self.ui_plot3d.checkBoxColors.isChecked()
+    #     if is_colors:
+    #         class_column = self.ui_plot3d.comboBoxClass.currentText()
+    #     else:
+    #         class_column = None
+    #     self.plot3d: Plot3D = Plot3D(self.data_frame.df, x, y, z, class_column)
+    #     self.plot3d.show()
+    #     self.close_plot3d_dialog()
+    #
+    # def open_hist_dialog(self):
+    #     self.hist_dialog = QtWidgets.QDialog()
+    #     self.ui_hist = HistogramDialog()
+    #     self.ui_hist.setupUi(self.hist_dialog)
+    #     self.ui_hist.comboBoxColumn.addItems(self.data_frame.df.columns)
+    #     self.hist_dialog.show()
+    #     self.ui_hist.okButton.clicked.connect(lambda: self.show_hist())
 
     def open_subset_dialog(self):
         self.subset_dialog = QtWidgets.QDialog()
