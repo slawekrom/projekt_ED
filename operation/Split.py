@@ -3,6 +3,7 @@ from collections import Counter
 from operation.SplitInfo import SplitInfo
 import pandas as pd
 import numpy as np
+import time
 
 class Split:
     def __init__(self, df):
@@ -14,6 +15,7 @@ class Split:
         self.vectorized_df = None
 
     def split_data(self):
+        start = time.time()
         self.clean_vectors()
         vector_size = 0
         new_df = self.df
@@ -130,34 +132,32 @@ class Split:
                         new_df = new_df[new_df[best_split.column] < best_split.split_point]
                 else: # przypadek gdy zostały takie same punkty ale należące do różnych klas - zakończyć algorytm
                     new_df.drop(new_df.index, inplace=True)  # drop df  - nie trzeba dalej dzielić
-            print(len(new_df))
+            print('Left ' + str(len(new_df)) + ' points')
+
+        end = time.time()
+        print(end-start)
 
     def create_vectorized_df(self):
+        start = time.time()
         columns_name = []
         for i in range(len(self.values_vector)):
             columns_name.append('z'+str(i+1))
 
         columns_name.append('class')
         vectorized_df = pd.DataFrame(columns=columns_name)
-        data_dict = dict()
-        for index, row in self.df.iterrows(): # petla po danych
-            new_values = []
-            for i in range(len(self.applied_splits)): # petla po nowych atrybutach
-                split = self.applied_splits[i]
-                if split.lower:
-                    if self.df[split.column][index] < split.split_point:
-                        new_values.append(1)
-                    else:
-                        new_values.append(0)
 
-                elif self.df[split.column][index] > split.split_point:
-                    new_values.append(1)
-                else:
-                    new_values.append(0)
-            new_values.append(self.df[self.df.columns[-1]][index])
-            vectorized_df = vectorized_df.append(pd.Series(new_values, index=columns_name), ignore_index=True)
+        for i in range(len(columns_name) -1):
+            column = columns_name[i]
+            split = self.applied_splits[i]
+            if split.lower:
+                vectorized_df[column] = np.where(self.df[split.column] < split.split_point, 1, 0)
+            else:
+                vectorized_df[column] = np.where(self.df[split.column] > split.split_point, 1, 0)
 
+        vectorized_df['class'] = self.df[self.df.columns[-1]].to_numpy()
         self.vectorized_df = vectorized_df
+        end = time.time()
+        print(end-start)
         return vectorized_df
 
     def classify_new(self, values):

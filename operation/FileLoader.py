@@ -17,4 +17,4 @@ class FileLoader:
 
     @staticmethod
     def save_to_file(df, filename):
-        df.to_csv(str(filename + '.csv'))
+        df.to_csv(str(filename + '.csv'), index=False)
