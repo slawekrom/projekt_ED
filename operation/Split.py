@@ -43,7 +43,7 @@ class Split:
 
                     if unique_classes == 1:
                         split_info: SplitInfo = SplitInfo(split_point=split_point, column=columns[column],
-                                                          count=len(splited_df.index), lower=True, o_class=splited_df.iloc[0][class_column])
+                                                          count=len(splited_df.index), lower=True, o_class=splited_df.iloc[0][class_column], deleted=0)
                         splits.append(split_info)
                     else:
                         break
@@ -58,7 +58,7 @@ class Split:
 
                     if unique_classes == 1:
                         split_info: SplitInfo = SplitInfo(split_point=split_point, column=columns[column],
-                                                          count=len(splited_df.index), lower=False, o_class=splited_df.iloc[0][class_column])
+                                                          count=len(splited_df.index), lower=False, o_class=splited_df.iloc[0][class_column], deleted=0)
                         splits.append(split_info)
                     else:
                         break
@@ -78,12 +78,15 @@ class Split:
             # była blokazda XOR
             else:
                 splits = []
+                reserve_splits = []
                 for column in range(size):  # petla po columnach -atrybutach
                     column_values = new_df[columns[column]].unique().tolist()
                     column_values.sort()
                     tmp_df = new_df.filter([columns[column], new_df.columns[-1]],
                                            axis=1)  # zbiór danych z badaną kolumną i kolumną decyzyjną
                     split_info = None
+                    reserve_split = None
+                    omitted_points = 0
                     for i in range(len(column_values) - 1):  # petla po wartosciach atrybutu od dołu
 
                         split_point = column_values[i] + (
@@ -92,16 +95,35 @@ class Split:
                             tmp_df[columns[column]] < split_point]  # zbiór podzielony względem punktu podziału
                         counter = Counter(splited_df[class_column])
 
+                        elements = len(counter.keys())
+                        if omitted_points == 0:
+                            for i in range(elements - 1):
+                                omitted_points += counter.most_common(elements)[i + 1][
+                                    1]  # ile było pominiętych przy pierwszym cięciu
+
+                        actual_deleted = 0
+                        for i in range(elements - 1):
+                            actual_deleted += counter.most_common(elements)[i + 1][1]
+
                         if len(counter.keys()) == 2 and counter.most_common(2)[1][1] == 1:
                             split_info: SplitInfo = SplitInfo(split_point=split_point, column=columns[column],
                                                               count=len(splited_df.index), lower=True,
-                                                              o_class=counter.most_common(1)[0][0])
+                                                              o_class=counter.most_common(1)[0][0], deleted=counter.most_common(2)[1][1])
+                        elif actual_deleted == omitted_points: # pominięte punkty >1 ale nie więcej niż w pierwszym cięciu
+                            reserve_split: SplitInfo = SplitInfo(split_point=split_point, column=columns[column],
+                                                              count=len(splited_df.index), lower=True,
+                                                              o_class=counter.most_common(1)[0][0],deleted=counter.most_common(2)[1][1])
+                            reserve_splits.append(reserve_split)
+
                         elif split_info is not None:
                             splits.append(split_info)
                             break
                         else:
                             break
+
                     split_info = None
+                    reserve_split = None
+                    omitted_points = 0
                     for i in range(len(column_values) - 1, 0, -1):  # petla po wartosciach atrybutu od góry
 
                         split_point = column_values[i] + (
@@ -110,10 +132,27 @@ class Split:
                             tmp_df[columns[column]] > split_point]  # zbiór podzielony względem punktu podziału
                         counter = Counter(splited_df[class_column])
 
+                        elements = len(counter.keys())
+                        if omitted_points == 0:
+                            for i in range(elements - 1):
+                                omitted_points += counter.most_common(elements)[i+1][1] # ile było pominiętych przy pierwszym cięciu
+
+                        actual_deleted = 0
+                        for i in range(elements - 1):
+                            actual_deleted += counter.most_common(elements)[i + 1][1]
+
                         if len(counter.keys()) == 2 and counter.most_common(2)[1][1] == 1:
                             split_info: SplitInfo = SplitInfo(split_point=split_point, column=columns[column],
                                                               count=len(splited_df.index), lower=False,
-                                                              o_class=counter.most_common(1)[0][0])
+                                                              o_class=counter.most_common(1)[0][0], deleted=counter.most_common(2)[1][1])
+
+
+                        elif actual_deleted == omitted_points: # pominięte punkty >1 ale nie więcej niż w pierwszym cięciu
+                            reserve_split: SplitInfo = SplitInfo(split_point=split_point, column=columns[column],
+                                                              count=len(splited_df.index), lower=False,
+                                                              o_class=counter.most_common(1)[0][0], deleted=counter.most_common(2)[1][1])
+                            reserve_splits.append(reserve_split)
+
                         elif split_info is not None:
                             splits.append(split_info)
                             break
@@ -127,13 +166,27 @@ class Split:
                     self.applied_splits.append(best_split)
                     vector_size += 1
                     print('Vector size: ' + str(vector_size) + ' cut points count: ' + str(best_split.count))
-                    print('Deleted points ' + str(counter.most_common(2)[1][1]) )
-                    deleted+=counter.most_common(2)[1][1]
+                    print('Deleted points ' + str(best_split.deleted) )
+                    deleted+= best_split.deleted
                     if best_split.lower:
                         new_df = new_df[new_df[best_split.column] > best_split.split_point]
                     else:
                         new_df = new_df[new_df[best_split.column] < best_split.split_point]
-                else: # przypadek gdy zostały takie same punkty ale należące do różnych klas - zakończyć algorytm
+
+                elif len(reserve_splits) > 0:
+                    reserve_splits.sort(reverse=True, key=lambda x: x.count)
+                    best_split = reserve_splits[0]
+                    self.values_vector.append(best_split.split_point)
+                    self.applied_splits.append(best_split)
+                    vector_size += 1
+                    print('Vector size: ' + str(vector_size) + ' cut points count: ' + str(best_split.count))
+                    print('Deleted points ' + str(best_split.deleted))
+                    deleted += best_split.deleted
+                    if best_split.lower:
+                        new_df = new_df[new_df[best_split.column] > best_split.split_point]
+                    else:
+                        new_df = new_df[new_df[best_split.column] < best_split.split_point]
+                else : # przypadek gdy zostały takie same punkty ale należące do różnych klas - zakończyć algorytm
                     new_df.drop(new_df.index, inplace=True)  # drop df  - nie trzeba dalej dzielić
             print('Left ' + str(len(new_df)) + ' points')
 
