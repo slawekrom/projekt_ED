@@ -15,6 +15,7 @@ class Split:
         self.vectorized_df = None
 
     def split_data(self):
+        deleted = 0
         start = time.time()
         self.clean_vectors()
         vector_size = 0
@@ -69,7 +70,7 @@ class Split:
                 self.values_vector.append(best_split.split_point)
                 self.applied_splits.append(best_split)
                 vector_size += 1
-                print('Vector size: ' + str(vector_size) + ' deleted points count: ' + str(best_split.count))
+                print('Vector size: ' + str(vector_size) + ' cut points count: ' + str(best_split.count))
                 if best_split.lower:
                     new_df = new_df[new_df[best_split.column] > best_split.split_point]
                 else:
@@ -113,6 +114,8 @@ class Split:
                             split_info: SplitInfo = SplitInfo(split_point=split_point, column=columns[column],
                                                               count=len(splited_df.index), lower=False,
                                                               o_class=counter.most_common(1)[0][0])
+                            print('Deleted points ' + str(counter.most_common(2)[1][1]))
+                            deleted+=counter.most_common(2)[1][1]
                         elif split_info is not None:
                             splits.append(split_info)
                             break
@@ -125,7 +128,7 @@ class Split:
                     self.values_vector.append(best_split.split_point)
                     self.applied_splits.append(best_split)
                     vector_size += 1
-                    print('Vector size: ' + str(vector_size) + ' deleted points count: ' + str(best_split.count))
+                    print('Vector size: ' + str(vector_size) + ' cut points count: ' + str(best_split.count))
                     if best_split.lower:
                         new_df = new_df[new_df[best_split.column] > best_split.split_point]
                     else:
@@ -135,6 +138,7 @@ class Split:
             print('Left ' + str(len(new_df)) + ' points')
 
         end = time.time()
+        print('\n Wszystkich usuniętych ' + str(deleted))
         #print(end-start)
 
     def create_vectorized_df(self):
