@@ -114,8 +114,6 @@ class Split:
                             split_info: SplitInfo = SplitInfo(split_point=split_point, column=columns[column],
                                                               count=len(splited_df.index), lower=False,
                                                               o_class=counter.most_common(1)[0][0])
-                            print('Deleted points ' + str(counter.most_common(2)[1][1]))
-                            deleted+=counter.most_common(2)[1][1]
                         elif split_info is not None:
                             splits.append(split_info)
                             break
@@ -129,6 +127,8 @@ class Split:
                     self.applied_splits.append(best_split)
                     vector_size += 1
                     print('Vector size: ' + str(vector_size) + ' cut points count: ' + str(best_split.count))
+                    print('Deleted points ' + str(counter.most_common(2)[1][1]) )
+                    deleted+=counter.most_common(2)[1][1]
                     if best_split.lower:
                         new_df = new_df[new_df[best_split.column] > best_split.split_point]
                     else:

@@ -7,3 +7,4 @@ class SplitInfo:
         self.count = count
         self.lower = lower
         self.objects_class = o_class
+        self.deleted = 0
