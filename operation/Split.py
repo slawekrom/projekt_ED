@@ -135,7 +135,7 @@ class Split:
             print('Left ' + str(len(new_df)) + ' points')
 
         end = time.time()
-        print(end-start)
+        #print(end-start)
 
     def create_vectorized_df(self):
         start = time.time()
@@ -157,7 +157,7 @@ class Split:
         vectorized_df['class'] = self.df[self.df.columns[-1]].to_numpy()
         self.vectorized_df = vectorized_df
         end = time.time()
-        print(end-start)
+        #print(end-start)
         return vectorized_df
 
     def classify_new(self, values):
@@ -171,13 +171,13 @@ class Split:
             columns_dict.update({col: index})
             index+=1
 
-        for i in range(len(values_array)):
+        for i in range(len(self.applied_splits)):
             split: Split = self.applied_splits[i]
             new_object_value = values_array[columns_dict.get(split.column)]
             if split.lower and new_object_value < split.split_point:
                 new_object_class = split.objects_class
                 break
-            elif not split.lowwer and new_object_value > split.split_point:
+            elif not split.lower and new_object_value > split.split_point:
                 new_object_class = split.objects_class
                 break
 
