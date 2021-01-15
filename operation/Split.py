@@ -13,6 +13,7 @@ class Split:
         self.values_vector = []
         self.applied_splits = []
         self.vectorized_df = None
+        self.droped_indexes = []
 
     def split_data(self):
         deleted = 0
@@ -43,7 +44,7 @@ class Split:
 
                     if unique_classes == 1:
                         split_info: SplitInfo = SplitInfo(split_point=split_point, column=columns[column],
-                                                          count=len(splited_df.index), lower=True, o_class=splited_df.iloc[0][class_column], deleted=0)
+                                                          count=len(splited_df.index), lower=True, o_class=splited_df.iloc[0][class_column], deleted=0, deleted_indexes = None)
                         splits.append(split_info)
                     else:
                         break
@@ -58,7 +59,7 @@ class Split:
 
                     if unique_classes == 1:
                         split_info: SplitInfo = SplitInfo(split_point=split_point, column=columns[column],
-                                                          count=len(splited_df.index), lower=False, o_class=splited_df.iloc[0][class_column], deleted=0)
+                                                          count=len(splited_df.index), lower=False, o_class=splited_df.iloc[0][class_column], deleted=0, deleted_indexes = None)
                         splits.append(split_info)
                     else:
                         break
@@ -87,6 +88,7 @@ class Split:
                     split_info = None
                     reserve_split = None
                     omitted_points = 0
+                    deleted_indexes = []
                     for i in range(len(column_values) - 1):  # petla po wartosciach atrybutu od dołu
 
                         split_point = column_values[i] + (
@@ -105,14 +107,16 @@ class Split:
                         for i in range(elements - 1):
                             actual_deleted += counter.most_common(elements)[i + 1][1]
 
+                        deleted_df = splited_df.loc[splited_df[splited_df.columns[-1]] != counter.most_common(1)[0][0]]
+                        deleted_indexes = list(deleted_df.index)
                         if len(counter.keys()) == 2 and counter.most_common(2)[1][1] == 1:
                             split_info: SplitInfo = SplitInfo(split_point=split_point, column=columns[column],
                                                               count=len(splited_df.index), lower=True,
-                                                              o_class=counter.most_common(1)[0][0], deleted=counter.most_common(2)[1][1])
+                                                              o_class=counter.most_common(1)[0][0], deleted=counter.most_common(2)[1][1], deleted_indexes = deleted_indexes)
                         elif actual_deleted == omitted_points: # pominięte punkty >1 ale nie więcej niż w pierwszym cięciu
                             reserve_split: SplitInfo = SplitInfo(split_point=split_point, column=columns[column],
                                                               count=len(splited_df.index), lower=True,
-                                                              o_class=counter.most_common(1)[0][0],deleted=counter.most_common(2)[1][1])
+                                                              o_class=counter.most_common(1)[0][0],deleted=counter.most_common(2)[1][1], deleted_indexes = deleted_indexes)
                             reserve_splits.append(reserve_split)
 
                         elif split_info is not None:
@@ -141,16 +145,18 @@ class Split:
                         for i in range(elements - 1):
                             actual_deleted += counter.most_common(elements)[i + 1][1]
 
+                        deleted_df = splited_df.loc[splited_df[splited_df.columns[-1]] != counter.most_common(1)[0][0]]
+                        deleted_indexes = list(deleted_df.index)
                         if len(counter.keys()) == 2 and counter.most_common(2)[1][1] == 1:
                             split_info: SplitInfo = SplitInfo(split_point=split_point, column=columns[column],
                                                               count=len(splited_df.index), lower=False,
-                                                              o_class=counter.most_common(1)[0][0], deleted=counter.most_common(2)[1][1])
+                                                              o_class=counter.most_common(1)[0][0], deleted=counter.most_common(2)[1][1], deleted_indexes = deleted_indexes)
 
 
                         elif actual_deleted == omitted_points: # pominięte punkty >1 ale nie więcej niż w pierwszym cięciu
                             reserve_split: SplitInfo = SplitInfo(split_point=split_point, column=columns[column],
                                                               count=len(splited_df.index), lower=False,
-                                                              o_class=counter.most_common(1)[0][0], deleted=counter.most_common(2)[1][1])
+                                                              o_class=counter.most_common(1)[0][0], deleted=counter.most_common(2)[1][1], deleted_indexes = deleted_indexes)
                             reserve_splits.append(reserve_split)
 
                         elif split_info is not None:
@@ -164,6 +170,8 @@ class Split:
                     best_split = splits[0]
                     self.values_vector.append(best_split.split_point)
                     self.applied_splits.append(best_split)
+                    if best_split.deleted_indexes != None:
+                        self.droped_indexes.extend(best_split.deleted_indexes)
                     vector_size += 1
                     print('Vector size: ' + str(vector_size) + ' cut points count: ' + str(best_split.count))
                     print('Deleted points ' + str(best_split.deleted) )
@@ -178,6 +186,8 @@ class Split:
                     best_split = reserve_splits[0]
                     self.values_vector.append(best_split.split_point)
                     self.applied_splits.append(best_split)
+                    if best_split.deleted_indexes != None:
+                        self.droped_indexes.extend(best_split.deleted_indexes)
                     vector_size += 1
                     print('Vector size: ' + str(vector_size) + ' cut points count: ' + str(best_split.count))
                     print('Deleted points ' + str(best_split.deleted))
@@ -212,6 +222,9 @@ class Split:
                 vectorized_df[column] = np.where(self.df[split.column] > split.split_point, 1, 0)
 
         vectorized_df['class'] = self.df[self.df.columns[-1]].to_numpy()
+        #usunięcie pominiętch punktów
+        if self.droped_indexes != None:
+            vectorized_df = vectorized_df.drop(self.droped_indexes)
         self.vectorized_df = vectorized_df
         end = time.time()
         #print(end-start)
